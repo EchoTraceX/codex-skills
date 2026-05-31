@@ -1,11 +1,13 @@
 param(
-    [string]$CodexSkillsDir = "$HOME\.codex\skills"
+    [string]$CodexSkillsDir = "$HOME\.codex\skills",
+    [switch]$IncludeNew
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $targetSkills = Join-Path $repoRoot "skills"
+$manifestPath = Join-Path $targetSkills "manifest.txt"
 $excluded = @(".system", "codex-primary-runtime")
 
 if (-not (Test-Path -LiteralPath $CodexSkillsDir)) {
@@ -14,21 +16,39 @@ if (-not (Test-Path -LiteralPath $CodexSkillsDir)) {
 
 New-Item -ItemType Directory -Force -Path $targetSkills | Out-Null
 
-Get-ChildItem -LiteralPath $CodexSkillsDir -Directory |
-    Where-Object { $_.Name -notin $excluded } |
-    ForEach-Object {
-        $target = Join-Path $targetSkills $_.Name
-        if (Test-Path -LiteralPath $target) {
-            Remove-Item -LiteralPath $target -Recurse -Force
-        }
-        Copy-Item -LiteralPath $_.FullName -Destination $target -Recurse -Force
-        Write-Host "Exported $($_.Name) -> $target"
+if ($IncludeNew -or -not (Test-Path -LiteralPath $manifestPath)) {
+    $skillNames = Get-ChildItem -LiteralPath $CodexSkillsDir -Directory |
+        Where-Object { $_.Name -notin $excluded } |
+        Select-Object -ExpandProperty Name
+} else {
+    $skillNames = Get-Content -LiteralPath $manifestPath |
+        Where-Object { $_ -and -not $_.StartsWith("#") } |
+        ForEach-Object { $_.Trim() }
+}
+
+foreach ($name in $skillNames) {
+    $source = Join-Path $CodexSkillsDir $name
+    if (-not (Test-Path -LiteralPath $source)) {
+        Write-Warning "Skipping missing local skill: $name"
+        continue
     }
 
-Get-ChildItem -LiteralPath $targetSkills -Directory |
+    $target = Join-Path $targetSkills $name
+    if (Test-Path -LiteralPath $target) {
+        Remove-Item -LiteralPath $target -Recurse -Force
+    }
+    Copy-Item -LiteralPath $source -Destination $target -Recurse -Force
+    Write-Host "Exported $name -> $target"
+}
+
+$manifestNames = Get-ChildItem -LiteralPath $targetSkills -Directory |
     Select-Object -ExpandProperty Name |
-    Sort-Object |
-    Set-Content -LiteralPath (Join-Path $targetSkills "manifest.txt") -Encoding utf8
+    Sort-Object
+[System.IO.File]::WriteAllLines($manifestPath, $manifestNames, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host ""
 Write-Host "Review changes with: git status"
+if (-not $IncludeNew) {
+    Write-Host "Private-safety mode: only skills listed in skills/manifest.txt were exported."
+    Write-Host "Use -IncludeNew only when you intentionally want to add new local skills."
+}

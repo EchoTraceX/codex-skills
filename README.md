@@ -43,6 +43,14 @@ cd codex-skills
 .\scripts\export-from-codex.ps1
 ```
 
+默认情况下，导出脚本只会导出 `skills/manifest.txt` 里已经登记的 skills，避免把本机私人 skill 误同步到公开仓库。
+
+如果你确认要把本机新增的 skill 也加入公开仓库，执行：
+
+```powershell
+.\scripts\export-from-codex.ps1 -IncludeNew
+```
+
 然后提交并推送：
 
 ```powershell
@@ -92,5 +100,6 @@ xlsx
 
 - 不要把密钥、token、账号信息写进 skill 文件。
 - 本仓库不会同步 Codex 自带目录：`.system`、`codex-primary-runtime`。
+- `export-from-codex.ps1` 默认不会导出未登记的新 skill，防止私人 skill 被误推到公开仓库。
 - 推荐优先在本仓库里编辑 skills，再执行 `.\scripts\install-to-codex.ps1` 安装到本机。
 - 如果其他电脑上有本地未提交改动，先处理本地改动，再执行更新脚本。
