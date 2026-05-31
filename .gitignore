@@ -1,0 +1,14 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local temp files
+*.tmp
+*.bak
+*.log
+
+# Do not commit local runtime state
+.codex/
+tmp/
+cache/

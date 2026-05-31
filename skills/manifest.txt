@@ -1,0 +1,15 @@
+algorithmic-art
+canvas-design
+cli-anything
+doc-coauthoring
+docx
+drawio-skill
+frontend-design
+internal-comms
+mcp-builder
+pdf
+pptx
+slack-gif-creator
+theme-factory
+webapp-testing
+xlsx
